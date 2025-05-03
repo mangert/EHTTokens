@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
-import "./IERC20.sol";
-
 /**
  * @title IERC6093
  * @dev Интерфейс ошибок для токенов
   */
 
- interface IERC6093 is IERC20 {
+ interface IERC6093 {
 
     /**
      * @dev выбрасывется при недостаточном балансе токенов

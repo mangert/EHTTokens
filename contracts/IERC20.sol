@@ -48,7 +48,19 @@ pragma solidity ^0.8.29;
      */
     function balanceOf(address _owner) external view returns (uint256 balance);
     
+    /**
+     * @dev функция переводит токены с адреса отправителя на заданный адрес
+     * @param _to адрес получателя
+     * @param _amount сумма перевода
+     */
     function transfer(address _to, uint256 _amount) external returns (bool success);
+    
+    /**
+     * @dev функция переводит токены между адресами
+     * @param _from адрес отправителя
+     * @param _to адрес получателя
+     * @param _amount сумма перевода
+     */
     function transferFrom(address _from, address _to, uint256 _amount) external returns (bool success);
     function approve(address _spender, uint256 _amount) external returns (bool success);
     
