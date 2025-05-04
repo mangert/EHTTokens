@@ -4,8 +4,9 @@ pragma solidity ^0.8.29;
 import "./IERC721Metadata.sol";
 import "./IERC721Enumerable.sol";
 import "./IERC6093.sol";
+import "./IERC721Reciever.sol";
 
-contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC6093 {
+contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC721Receiver, IERC6093 {
     string public override name;
     string public override symbol;
 
@@ -31,7 +32,12 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC6093 {
         address _from,
         address _to,
         uint256 _tokenId
-    ) external payable override {}
+    ) external payable override {
+        require(_isApprovedOrOwner(msg.sender, _tokenId), IERC6093.ERC721InsufficientApproval(_from, _tokenId));
+        
+        _transfer(_from, _to, _tokenId);        
+    
+    }
 
     function approve(
         address _approved,
@@ -58,7 +64,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC6093 {
      
      //служебные функции  
     function  _transfer(address _from, address _to, uint256 tokenId)  internal {
-        require(_exists(tokenId), IERC6093.ERC721NonexistentToken(tokenId));
+        require(_exists(tokenId), IERC6093.ERC721NonexistentToken(tokenId));        
         require (_from != _to 
                     && _to != address(0),
                     IERC6093.ERC721InvalidReceiver(_to) 
@@ -89,7 +95,14 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC6093 {
         return ownerOf[tokenId] != address(0);
     }  
 
-    /*function _checkOnERC721Received(
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4) {
+        // Логируем или обрабатываем информацию о переданном токене
+        emit IERC721Receiver.TokenReceived(operator, from, tokenId, data);
+        // Возвращаем селектор функции, который подтверждает успешную обработку
+        return this.onERC721Received.selector;
+    }
+    
+    function _checkOnERC721Received(
         address from,
         address to,
         uint tokenId
@@ -116,9 +129,5 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC6093 {
         } else {
             return true;
         }
-    }*/
-
-
-
-    
+    }    
 }
