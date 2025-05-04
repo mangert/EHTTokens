@@ -49,51 +49,42 @@ pragma solidity ^0.8.29;
      */
     error ERC20InvalidSpender(address spender); 
 
+    //ошибки для токенов стандарта ERC721
 
     /**
-    * 
+    * @dev выбрасывается, если адрес не владеет токенами
+    * @param owner - адрес, по которому делается запрос 
     */
     error ERC721InvalidOwner(address owner);
 
-/*Indicates that an address can’t be an owner. Used in balance queries.
+    /**
+     * @dev выбрасывается, если токен не существует
+     * @param tokenId - идентификатор токена
+     */
+    error ERC721NonexistentToken(uint256 tokenId);
 
-Usage guidelines:
+    /**
+     * @dev выбрасывается, если отправитель токена не является его владельцем
+     * @param sender - адрес, отправляющий токен
+     * @param tokenId - идентификатор токена    
+     * @param owner - адрес владельца токена
+     */
+    error ERC721IncorrectOwner(address sender, uint256 tokenId, address owner);
 
-    RECOMMENDED for addresses whose ownership is disallowed (eg. ERC-721 explicitly disallows address(0) to be an owner).
-    MUST NOT be used for transfers.
-        Use ERC721IncorrectOwner instead.
+    error ERC721InvalidSender(address sender);
 
-ERC721NonexistentToken(uint256 tokenId)
-
-Indicates a tokenId whose owner is the zero address.
-
-Usage guidelines:
-
-    The tokenId MUST BE a non-minted or burned token.
-
-ERC721IncorrectOwner(address sender, uint256 tokenId, address owner)
-
-Indicates an error related to the ownership over a particular token. Used in transfers.
-
-Usage guidelines:
-
-    sender MUST NOT be owner.
-    MUST NOT be used for approval operations.
-
-ERC721InvalidSender(address sender)
-
-Indicates a failure with the token sender. Used in transfers.
+/*Indicates a failure with the token sender. Used in transfers.
 
 Usage guidelines:
 
     RECOMMENDED for disallowed transfers from the zero address.
     MUST NOT be used for approval operations.
     MUST NOT be used for ownership or approval requirements.
-        Use ERC721IncorrectOwner or ERC721InsufficientApproval instead.
+        Use ERC721IncorrectOwner or ERC721InsufficientApproval instead.*/
 
-ERC721InvalidReceiver(address receiver)
+   error ERC721InvalidReceiver(address receiver);
 
-Indicates a failure with the token receiver. Used in transfers.
+/*Indicates a failure with the token receiver. Used in transfers.
 
 Usage guidelines:
 
@@ -101,7 +92,13 @@ Usage guidelines:
     RECOMMENDED for disallowed transfers to non-ERC721TokenReceiver contracts or those that reject a transfer. (eg. returning an invalid response in onERC721Received).
     MUST NOT be used for approval operations.
 
-ERC721InsufficientApproval(address operator, uint256 tokenId)
+    */
+   /**
+    * @dev выбрасывается при ошибках разрешений при переводах
+    * 
+    */
+   error ERC721InsufficientApproval(address operator, uint256 tokenId);
+/*
 
 Indicates a failure with the operator’s approval. Used in transfers.
 
