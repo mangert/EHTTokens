@@ -49,5 +49,87 @@ pragma solidity ^0.8.29;
      */
     error ERC20InvalidSpender(address spender); 
 
+
+    /**
+    * 
+    */
+    error ERC721InvalidOwner(address owner);
+
+/*Indicates that an address can’t be an owner. Used in balance queries.
+
+Usage guidelines:
+
+    RECOMMENDED for addresses whose ownership is disallowed (eg. ERC-721 explicitly disallows address(0) to be an owner).
+    MUST NOT be used for transfers.
+        Use ERC721IncorrectOwner instead.
+
+ERC721NonexistentToken(uint256 tokenId)
+
+Indicates a tokenId whose owner is the zero address.
+
+Usage guidelines:
+
+    The tokenId MUST BE a non-minted or burned token.
+
+ERC721IncorrectOwner(address sender, uint256 tokenId, address owner)
+
+Indicates an error related to the ownership over a particular token. Used in transfers.
+
+Usage guidelines:
+
+    sender MUST NOT be owner.
+    MUST NOT be used for approval operations.
+
+ERC721InvalidSender(address sender)
+
+Indicates a failure with the token sender. Used in transfers.
+
+Usage guidelines:
+
+    RECOMMENDED for disallowed transfers from the zero address.
+    MUST NOT be used for approval operations.
+    MUST NOT be used for ownership or approval requirements.
+        Use ERC721IncorrectOwner or ERC721InsufficientApproval instead.
+
+ERC721InvalidReceiver(address receiver)
+
+Indicates a failure with the token receiver. Used in transfers.
+
+Usage guidelines:
+
+    RECOMMENDED for disallowed transfers to the zero address.
+    RECOMMENDED for disallowed transfers to non-ERC721TokenReceiver contracts or those that reject a transfer. (eg. returning an invalid response in onERC721Received).
+    MUST NOT be used for approval operations.
+
+ERC721InsufficientApproval(address operator, uint256 tokenId)
+
+Indicates a failure with the operator’s approval. Used in transfers.
+
+Usage guidelines:
+
+    isApprovedForAll(owner, operator) MUST be false for the tokenId’s owner and operator.
+    getApproved(tokenId) MUST not be operator.
+
+ERC721InvalidApprover(address approver)
+
+Indicates a failure with the owner of a token to be approved. Used in approvals.
+
+Usage guidelines:
+
+    RECOMMENDED for disallowed approvals from the zero address.
+    MUST NOT be used for transfer operations.
+
+ERC721InvalidOperator(address operator)
+
+Indicates a failure with the operator to be approved. Used in approvals.
+
+Usage guidelines:
+
+    RECOMMENDED for disallowed approvals to the zero address.
+    The operator MUST NOT be the owner of the approved token.
+    MUST NOT be used for transfer operations.
+        Use ERC721InsufficientApproval instead.
+
+*/
  }
     

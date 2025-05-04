@@ -56,6 +56,39 @@ describe("ETHTokens", function() {
         
     });
 
+    it("should revert uncorret transfers", async function() {
+        
+        const { user0, user1, ERC20_Token} = await loadFixture(deploy);
+        
+        const amount = 1000n;
+        const balance_user0_before = await ERC20_Token.balanceOf(user0);
+        
+        //корректная транзакция - чтобы перебросить на второй адрес
+        const tx = await ERC20_Token.transfer(user1, amount);
+        await tx.wait(1);         
+
+        //дополнительно - выдача разрешений по переводу на второй адрес
+        const tx_app = await ERC20_Token.approve(user1, amount);
+        tx_app.wait(1);
+
+        //некорректные транзы
+        const ZERO_ADDRESS =  ethers.ZeroAddress;//"0x0000000000000000000000000000000000000000";
+        await expect(ERC20_Token.connect(user1).transfer(user0, amount * 2n)).to.be.reverted;
+        await expect(ERC20_Token.transfer(ZERO_ADDRESS, amount)).to.be.reverted;
+        await expect(ERC20_Token.transfer(user0, amount)).to.be.reverted;
+        
+        
+        await expect(ERC20_Token.connect(user1).transferFrom(user1, user0, amount * 2n)).to.be.reverted;
+        await expect(ERC20_Token.connect(user1).transferFrom(ZERO_ADDRESS, user0, amount)).to.be.reverted;
+        await expect(ERC20_Token.connect(user1).transferFrom(user1, ZERO_ADDRESS, amount)).to.be.reverted;
+        await expect(ERC20_Token.transferFrom(user0, user0, amount)).to.be.reverted;
+        await expect(ERC20_Token.connect(user1).transferFrom(user0, user1, amount * 2n)).to.be.reverted;
+
+        await expect(ERC20_Token.approve(ZERO_ADDRESS, amount)).to.be.reverted;
+
+
+    });
+
 
     it("should possible approve", async function() {
         
