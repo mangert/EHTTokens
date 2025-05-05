@@ -2,9 +2,9 @@
 pragma solidity ^0.8.29;
 
 import "./IERC20.sol";
-import "./IERC6093.sol";
+import "./ERC20Errors.sol";
 
-contract ERC20  is IERC20, IERC6093 {
+contract ERC20  is IERC20, ERC20Errors {
 
     string public override name;
     string public override symbol;

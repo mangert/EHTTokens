@@ -1,19 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.29;
 
+/**
+ * @title IERC721
+ * @dev Интерфейс для токена по стандарту ERC-721
+ */  
+
 interface IERC721 {
-    /** @dev This emits when ownership of any NFT changes by any mechanism.
-    *  This event emits when NFTs are created (`from` == 0) and destroyed
-    *  (`to` == 0). Exception: during contract creation, any number of NFTs
-    *  may be created and assigned without emitting Transfer. At the time of
-    *  any transfer, the approved address for that NFT (if any) is reset to none.
-    */
+    /** 
+    * @dev Генерируется при создании, переводе и уничтожении NFT
+    * @param _from  - адрес отправителя
+    * @param _to  - адрес получателя
+    * @param _tokenId  - идентификатор токена
+    */    
     event Transfer(address indexed _from, address indexed _to, uint256 indexed _tokenId);
 
-    /*** @dev This emits when the approved address for an NFT is changed or
-    *  reaffirmed. The zero address indicates there is no approved address.
-    *  When a Transfer event emits, this also indicates that the approved
-    *  address for that NFT (if any) is reset to none.
+    /**
+     * @dev Генерируется, в случае изменения разрешений на NFT
+    *  @param _owner  - адрес владельца
+    *  @param _approved  - на который выдается разрешение
+    *  @param _tokenId  - идентификатор токена
     */
     event Approval(address indexed _owner, address indexed _approved, uint256 indexed _tokenId);
 

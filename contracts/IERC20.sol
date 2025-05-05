@@ -4,7 +4,7 @@ pragma solidity ^0.8.29;
 /**
  * @title IERC20
  * @dev Интерфейс для токена по стандарту ERC-20
-  */
+ */
 
  interface IERC20 {
 

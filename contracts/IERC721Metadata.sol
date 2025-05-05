@@ -5,14 +5,15 @@ import "./IERC721.sol";
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-///  Note: the ERC-165 identifier for this interface is 0x5b5e139f.
+
 interface IERC721Metadata is IERC721 {
-    /**@notice возвращает имя коллекции
-     */
+    /** 
+    * @notice возвращает имя коллекции
+    */
     function name() external view returns (string memory _name);
 
     /**
-     * возвращает тикер коллекции
+     * @notice возвращает тикер коллекции
      */
     function symbol() external view returns (string memory _symbol);
 

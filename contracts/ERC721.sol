@@ -3,12 +3,17 @@ pragma solidity ^0.8.29;
 
 import "./IERC721Metadata.sol";
 import "./IERC721Enumerable.sol";
-import "./IERC6093.sol";
+import "./ERC721Errors.sol";
 import "./IERC721Reciever.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
-contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC721Receiver, IERC6093 {
+
+contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     string public override name;
     string public override symbol;
+
+    using Strings for uint256;
+    string private baseURI;
 
     mapping(address owner => uint256 balance) public override balanceOf;
     mapping (uint256 tokenId => address owner) public override ownerOf;
@@ -18,44 +23,64 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC721Receiver, IERC6093
     uint256 public override totalSupply;
 
 
+    constructor(string memory _name, string memory _symbol, string memory _baseURI){
+        name = _name;
+        symbol = _symbol;
+        baseURI = _baseURI;
+    }
 
 
-    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes calldata data) external payable override {}
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes calldata data) external payable override {
+        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));
+        require(_checkOnERC721Received(_from, _to, _tokenId), ERC721Errors.ERC721InvalidReceiver(_to));
+        _transfer(_from, _to, _tokenId);   
+    }
 
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external payable override {}
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable override {
+        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));
+        require(_checkOnERC721Received(_from, _to, _tokenId), ERC721Errors.ERC721InvalidReceiver(_to));
+        _transfer(_from, _to, _tokenId);      
+        
+    }
 
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external payable override {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), IERC6093.ERC721InsufficientApproval(_from, _tokenId));
+    function transferFrom(address _from, address _to, uint256 _tokenId) external payable override {
+        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));        
         
         _transfer(_from, _to, _tokenId);        
     
     }
 
-    function approve(
-        address _approved,
-        uint256 _tokenId
-    ) external payable override {}
+    function approve(address _approved, uint256 _tokenId) external payable override {
+        
+        require(_exists(_tokenId), ERC721Errors.ERC721NonexistentToken(_tokenId));        
 
-    function setApprovalForAll(
-        address _operator,
-        bool _approved
-    ) external override {}    
+        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InvalidApprover(msg.sender));
+        
+        require(_approved != address(0) && _approved != msg.sender, ERC721Errors.ERC721InvalidOperator(_approved));
 
-    function tokenURI(
-        uint256 _tokenId
-    ) external view override returns (string memory) {}
+        getApproved[_tokenId] = _approved;
+
+        emit IERC721.Approval(msg.sender, _approved, _tokenId);
+        
+    }
+
+    function setApprovalForAll(address _operator,  bool _approved) external override {
+        
+        require(_operator != address(0) && _operator != msg.sender, ERC721Errors.ERC721InvalidOperator(_operator));
+        
+        isApprovedForAll[msg.sender][_operator] = true;
+    }    
+
+    function tokenURI(uint256 _tokenId) external view override returns (string memory) {
+        
+        require(_exists(_tokenId), ERC721Errors.ERC721NonexistentToken(_tokenId));        
+        return string(abi.encodePacked(baseURI, _tokenId.toString(), ".json"));
+
+    }
     
-    function tokenByIndex(
-        uint256 _index
-    ) external view override returns (uint256) {}
+    function tokenByIndex(uint256 _index) external view override returns (uint256) {
+
+    }
 
     function tokenOfOwnerByIndex(
         address _owner,
@@ -64,21 +89,18 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC721Receiver, IERC6093
      
      //служебные функции  
     function  _transfer(address _from, address _to, uint256 tokenId)  internal {
-        require(_exists(tokenId), IERC6093.ERC721NonexistentToken(tokenId));        
+        require(_exists(tokenId), ERC721Errors.ERC721NonexistentToken(tokenId));        
         require (_from != _to 
                     && _to != address(0),
-                    IERC6093.ERC721InvalidReceiver(_to) 
+                    ERC721Errors.ERC721InvalidReceiver(_to) 
                 );
         
         ownerOf[tokenId] = _to;        
         ++balanceOf[_to];
         --balanceOf[_from];
         emit IERC721.Transfer(_from, _to, tokenId);        
-    }
+    }   
     
-    function _saveTransfer() internal {
-
-    }
 
     function _isApprovedOrOwner(address spender, uint tokenId) internal view returns (bool) {
         
@@ -93,20 +115,9 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC721Receiver, IERC6093
     
     function _exists(uint256 tokenId) internal view returns (bool) {
         return ownerOf[tokenId] != address(0);
-    }  
-
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external override returns (bytes4) {
-        // Логируем или обрабатываем информацию о переданном токене
-        emit IERC721Receiver.TokenReceived(operator, from, tokenId, data);
-        // Возвращаем селектор функции, который подтверждает успешную обработку
-        return this.onERC721Received.selector;
-    }
+    }      
     
-    function _checkOnERC721Received(
-        address from,
-        address to,
-        uint tokenId
-    ) private returns (bool) {
+    function _checkOnERC721Received(address from, address to, uint tokenId) private returns (bool) {
         if (to.code.length > 0) {
             try
                 IERC721Receiver(to).onERC721Received(
@@ -118,13 +129,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, IERC721Receiver, IERC6093
             returns (bytes4 ret) {
                 return ret == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
-                if (reason.length == 0) {
-                    revert("Non erc721 reciver");
-                } else {
-                    assembly {
-                        revert(add(32, reason), mload(reason))
-                    }
-                }
+                revert ERC721InvalidReceiver(to);                
             }
         } else {
             return true;
