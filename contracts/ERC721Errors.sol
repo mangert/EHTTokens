@@ -81,5 +81,6 @@ Usage guidelines:
         Use ERC721InsufficientApproval instead.
 
 */
+    error ERC721OutOfBoundsIndex(address _owner, uint256 _index);
  }
     

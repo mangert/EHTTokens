@@ -12,16 +12,20 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     string public override name;
     string public override symbol;
 
-    using Strings for uint256;
-    string private baseURI;
+    using Strings for uint256;    
 
     mapping(address owner => uint256 balance) public override balanceOf;
     mapping (uint256 tokenId => address owner) public override ownerOf;
     mapping (uint256 tokenId => address operator) public override getApproved;
-    mapping (address owner => mapping (address operator => bool)) public override isApprovedForAll;
+    mapping (address owner => mapping (address operator => bool)) public override isApprovedForAll;    
 
-    uint256 public override totalSupply;
-
+    string private baseURI;
+    uint256 private nextTokenId; //инкремент для минта
+    //хранилища для Enumerable
+    mapping(address owner => mapping(uint256 index => uint256)) private _ownedTokens;    
+    mapping(uint256 tokenId => uint256) private _ownedTokensIndex;
+    uint256[] private _allTokens;
+    mapping(uint256 tokenId => uint256) private _allTokensIndex;
 
     constructor(string memory _name, string memory _symbol, string memory _baseURI){
         name = _name;
@@ -77,15 +81,26 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         return string(abi.encodePacked(baseURI, _tokenId.toString(), ".json"));
 
     }
+
+    function totalSupply() public view returns (uint256){
+        return _allTokens.length;
+    }
     
     function tokenByIndex(uint256 _index) external view override returns (uint256) {
+        
+        require(_index < totalSupply(), ERC721Errors.ERC721OutOfBoundsIndex(address(0), _index));
+        return _allTokens[_index];
+
 
     }
 
-    function tokenOfOwnerByIndex(
-        address _owner,
-        uint256 _index
-    ) external view override returns (uint256) {}    
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view override returns (uint256) {
+        
+        require(_index < balanceOf[_owner], ERC721Errors.ERC721OutOfBoundsIndex(_owner, _index));
+
+        return _ownedTokens[_owner][_index];
+
+    }    
      
      //служебные функции  
     function  _transfer(address _from, address _to, uint256 tokenId)  internal {
@@ -95,6 +110,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
                     ERC721Errors.ERC721InvalidReceiver(_to) 
                 );
         
+        _updateEnumeration (_from, _to, tokenId);
         ownerOf[tokenId] = _to;        
         ++balanceOf[_to];
         --balanceOf[_from];
@@ -111,7 +127,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
                 isApprovedForAll[_owner][spender] ||
                 getApproved[tokenId] == spender            
         );            
-    }
+    }    
     
     function _exists(uint256 tokenId) internal view returns (bool) {
         return ownerOf[tokenId] != address(0);
@@ -134,5 +150,69 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         } else {
             return true;
         }
+    }
+
+    //служебные функции для Enumerable
+
+    function _addTokenToAllTokensEnumeration(uint256 _tokenId) internal {       
+
+        _allTokensIndex[_tokenId] = _allTokens.length;
+        _allTokens.push(_tokenId);
+    }
+
+    function _removeTokenFromAllTokensEnumeration(uint256 _tokenId) internal {
+         
+         uint256 lastTokenIndex = _allTokens.length - 1;
+         uint256 tokenIndex = _allTokensIndex[_tokenId];
+         uint256 lastTokenId = _allTokens[lastTokenIndex];
+
+         _allTokens[tokenIndex] = lastTokenId;
+         _allTokensIndex[lastTokenId] = tokenIndex;
+
+        
+        delete _allTokensIndex[_tokenId];
+        _allTokens.pop();
+
+    }
+
+    function _addTokenToOwnerEnumeration(address _to, uint _tokenId) internal {
+         uint256 nextIndex = balanceOf[_to] - 1;
+        _ownedTokens[_to][nextIndex] = _tokenId;
+        _ownedTokensIndex[_tokenId] = nextIndex;
+    }
+
+    function _removeTokenFromOwnerEnumeration(address _from, uint _tokenId) internal {
+        
+        uint256 lastTokenIndex = balanceOf[_from];
+        uint256 tokenIndex = _ownedTokensIndex[_tokenId];
+
+        mapping(uint256 index => uint256) storage _ownedTokensByOwner = _ownedTokens[_from];
+
+        
+        if (tokenIndex != lastTokenIndex) {
+            uint256 lastTokenId = _ownedTokensByOwner[lastTokenIndex];
+
+            _ownedTokensByOwner[tokenIndex] = lastTokenId;
+            _ownedTokensIndex[lastTokenId] = tokenIndex;
+        }
+
+        delete _ownedTokensIndex[_tokenId];
+        delete _ownedTokensByOwner[lastTokenIndex];
+        
+    }
+
+    function _updateEnumeration (address _from, address _to, uint256 _tokenId) internal {
+        
+        if (_from == address(0)) {
+            _addTokenToAllTokensEnumeration(_tokenId);
+        } else if (_from != _to) {
+            _removeTokenFromOwnerEnumeration(_from, _tokenId);
+        }
+        if (_to == address(0)) {
+            _removeTokenFromAllTokensEnumeration(_tokenId);
+        } else if (_from != _to) {
+            _addTokenToOwnerEnumeration(_to, _tokenId);
+        }
     }    
+
 }
