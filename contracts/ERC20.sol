@@ -37,10 +37,15 @@ contract ERC20  is IERC20, ERC20Errors {
     
     function transferFrom(address _from, address _to, uint256 _amount) external override returns (bool) {
         
-        uint256 limit = allowance[_from][msg.sender];        
-        require((msg.sender == _from || _amount <= limit), ERC20InsufficientAllowance(_from, limit, _amount));
+        require(_from != address(0), ERC20InvalidSender(_from));
         
-        return _transfer(_from, _to, _amount);        
+        uint256 limit = allowance[_from][msg.sender];         
+        require((msg.sender == _from || _amount <= limit), ERC20InsufficientAllowance(msg.sender, limit, _amount));
+        
+        _transfer(_from, _to, _amount);        
+        
+        return true;
+        
     }
     
     function approve(address _spender, uint256 _amount) external returns (bool) {
@@ -57,8 +62,7 @@ contract ERC20  is IERC20, ERC20Errors {
     //служебные функции
 
     function _transfer(address _from, address _to, uint256 _amount) internal returns(bool) {
-
-        require(_from != address(0), ERC20InvalidSender(_from));
+        
         require(_to != address(0), ERC20InvalidReceiver(_to));
         require(_to != _from, ERC20InvalidReceiver(_to));              
         
