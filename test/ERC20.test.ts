@@ -1,7 +1,5 @@
 import { loadFixture, ethers, expect } from "./setup";
 
-//"https://drive.google.com/drive/folders/1Ds1OrpnlwQeu8lu9UQoL0HzUEjPw6D-V/";
-
 describe("ERC20", function() {
     async function deploy() {        
         const [user0, user1, user2] = await ethers.getSigners();

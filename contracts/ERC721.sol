@@ -72,7 +72,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         
         require(_operator != address(0) && _operator != msg.sender, ERC721Errors.ERC721InvalidOperator(_operator));
         
-        isApprovedForAll[msg.sender][_operator] = true;
+        isApprovedForAll[msg.sender][_operator] = _approved;
     }    
 
     function tokenURI(uint256 _tokenId) external view override returns (string memory) {
