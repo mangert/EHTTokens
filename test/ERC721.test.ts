@@ -46,7 +46,7 @@ describe("ERC721", function() {
         
             const { user0, user1, ERC721_Token} = await loadFixture(deploy);
             
-            const amount = 1000n;
+            const tokenID = 1000n;
             const balance_user0_before = await ERC721_Token.balanceOf(user0);
             
             const tx = await ERC721_Token.transfer(user1, amount);

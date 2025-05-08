@@ -21,16 +21,29 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
     string private baseURI;
     uint256 private nextTokenId; //инкремент для минта
+    
     //хранилища для Enumerable
     mapping(address owner => mapping(uint256 index => uint256)) private _ownedTokens;    
     mapping(uint256 tokenId => uint256) private _ownedTokensIndex;
     uint256[] private _allTokens;
     mapping(uint256 tokenId => uint256) private _allTokensIndex;
 
-    constructor(string memory _name, string memory _symbol, string memory _baseURI){
+    //требования для минта
+    uint256 public mintPrice;
+    uint256 public maxSupply;
+
+    constructor(
+        string memory _name, 
+        string memory _symbol, 
+        string memory _baseURI, 
+        uint256 _mintPrice, 
+        uint256 _maxSupply
+    ){
         name = _name;
         symbol = _symbol;
         baseURI = _baseURI;
+        mintPrice = _mintPrice;
+        maxSupply = _maxSupply;
     }
 
 
@@ -50,8 +63,21 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     function transferFrom(address _from, address _to, uint256 _tokenId) external payable override {
         require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));        
         
-        _transfer(_from, _to, _tokenId);        
+        _transfer(_from, _to, _tokenId);                
     
+    }
+
+    function mint() external payable {
+        
+
+    }
+
+    function safeMint() external payable {
+
+    }
+
+    function burn(uint256 _tokenId) external {
+
     }
 
     function approve(address _approved, uint256 _tokenId) external payable override {
@@ -60,7 +86,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
         require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InvalidApprover(msg.sender));
         
-        require(_approved != address(0) && _approved != msg.sender, ERC721Errors.ERC721InvalidOperator(_approved));
+        require(_approved != msg.sender, ERC721Errors.ERC721InvalidOperator(_approved));
 
         getApproved[_tokenId] = _approved;
 
@@ -90,8 +116,6 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         
         require(_index < totalSupply(), ERC721Errors.ERC721OutOfBoundsIndex(address(0), _index));
         return _allTokens[_index];
-
-
     }
 
     function tokenOfOwnerByIndex(address _owner, uint256 _index) external view override returns (uint256) {
@@ -115,8 +139,25 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         ++balanceOf[_to];
         --balanceOf[_from];
         emit IERC721.Transfer(_from, _to, tokenId);        
-    }   
-    
+        
+        getApproved[tokenId] = address(0);        
+        emit Approval(_to, address(0), tokenId);
+        
+    }    
+
+    function _mint(address _minter, uint256 _value) internal {    
+        
+        require (nextTokenId < maxSupply, ERC721MintNotAvailable());
+        require (_value <= mintPrice, ERC721NotEnoughTransferredFunds(_minter, _value, mintPrice));
+
+        _updateEnumeration (address(0), _minter, nextTokenId);
+        ownerOf[nextTokenId] = _minter;        
+        ++balanceOf[_minter];
+        
+        emit IERC721.Transfer(address(0), _minter, nextTokenId);                        
+        nextTokenId++;
+
+    }
 
     function _isApprovedOrOwner(address spender, uint tokenId) internal view returns (bool) {
         

@@ -21,6 +21,11 @@ interface IERC721Metadata is IERC721 {
     /// @dev Throws if `_tokenId` is not a valid NFT. URIs are defined in RFC
     ///  3986. The URI may point to a JSON file that conforms to the "ERC721
     ///  Metadata JSON Schema".
+    /**
+     * @notice возращает URI конкретного токена
+     * @param _tokenId - идентификатор токена
+     * @return строка, содержащая URI
+     */
     function tokenURI(uint256 _tokenId) external view returns (string memory);
 }
 
