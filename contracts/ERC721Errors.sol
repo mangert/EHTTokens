@@ -81,4 +81,10 @@ pragma solidity ^0.8.29;
     */
    error ERC721MintNotAvailable();
 
+   /**
+    * @notice выбрасывается при попытке инициирования транзакции (вывода средств) не владельцем контракта
+    * @param _msgSender - адрес, инициирующий вывод
+    */
+   error ERC721NotAllowedWithdraw(address _msgSender);  
+
  }    

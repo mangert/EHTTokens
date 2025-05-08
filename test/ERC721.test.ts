@@ -1,19 +1,20 @@
 import { loadFixture, ethers, expect } from "./setup";
 
-//"https://drive.google.com/drive/folders/1Ds1OrpnlwQeu8lu9UQoL0HzUEjPw6D-V/";
-
 describe("ERC721", function() {
     
     const tokenName = "Alphabet";
     const tokenSymbol = "ABC";
     const collectionURI = "https://drive.google.com/drive/folders/1Ds1OrpnlwQeu8lu9UQoL0HzUEjPw6D-V/";
     
+    const mintPrice = 1_000_000_000n;
+    const maxSupply = 3; //заведомо маленькое число, чтобы было легко превысить
+    
     async function deploy() {        
         const [user0, user1, user2] = await ethers.getSigners();
         
         const ERC721_Factory = await ethers.getContractFactory("ERC721");       
         
-        const ERC721_Token = await ERC721_Factory.deploy(tokenName, tokenSymbol, collectionURI);
+        const ERC721_Token = await ERC721_Factory.deploy(tokenName, tokenSymbol, collectionURI, mintPrice, maxSupply);
         await ERC721_Token.waitForDeployment();        
 
         return { user0, user1, user2, ERC721_Token }
@@ -26,7 +27,6 @@ describe("ERC721", function() {
             expect(ERC721_Token.target).to.be.properAddress;        
             expect(await ERC721_Token.name()).eq(tokenName);
             expect(await ERC721_Token.symbol()).eq(tokenSymbol);           
-            expect(await ERC721_Token.symbol()).eq(collectionURI);           
     
         });
     
@@ -39,6 +39,114 @@ describe("ERC721", function() {
         });     
 
     });
+    
+    describe("minting and burning", function(){
+        
+        it("should possible mint NFT", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            
+            const tx = await ERC721_Token.mint({value: mintPrice})
+            await tx.wait(1);                     
+            
+            const balance_user0 = await ERC721_Token.balanceOf(user0);        
+            expect(balance_user0).eq(1);   
+            
+            const ownerOf = await ERC721_Token.ownerOf(0);
+            expect(ownerOf).eq(user0.address);
+
+            expect(tx).changeEtherBalances([ERC721_Token, user0], [mintPrice, -mintPrice]);
+        });       
+
+        it("should possible safeMint NFT", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            
+            const tx = await ERC721_Token.safeMint({value: mintPrice})
+            await tx.wait(1);                     
+            
+            const balance_user0 = await ERC721_Token.balanceOf(user0);        
+            expect(balance_user0).eq(1);   
+            
+            const ownerOf = await ERC721_Token.ownerOf(0);
+            expect(ownerOf).eq(user0.address);
+
+            expect(tx).changeEtherBalances([ERC721_Token, user0], [mintPrice, -mintPrice]);
+        });   
+        
+        it("should revert mint NFT with not enough funds", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            await expect(ERC721_Token.mint({value: (mintPrice - 1n)})).to.be
+                .revertedWithCustomError(ERC721_Token, "ERC721NotEnoughTransferredFunds")
+                .withArgs(user0.address, mintPrice - 1n, mintPrice);            
+        });       
+
+        it("should revert safeMint NFT with not enough funds", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            await expect(ERC721_Token.safeMint({value: (mintPrice - 1n)})).to.be
+                .revertedWithCustomError(ERC721_Token, "ERC721NotEnoughTransferredFunds")
+                .withArgs(user0.address, mintPrice - 1n, mintPrice);            
+        });
+        
+        it("should revert mint NFT with exceeding the max supply", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            const max = await ERC721_Token.maxSupply();
+            let tx: any;
+            for(let i = 0n; i != max; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+            
+            await expect(ERC721_Token.mint({value: mintPrice})).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721MintNotAvailable");
+
+        }); 
+
+        it("should revert safeMint NFT with exceeding the max supply", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            const max = await ERC721_Token.maxSupply();
+            let tx: any;
+            for(let i = 0n; i != max; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+            
+            await expect(ERC721_Token.safeMint({value: mintPrice})).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721MintNotAvailable");
+
+        }); 
+
+        it("should revert safeMint NFT to non-NFTReciever address", async function() {
+        
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            const code = "0x6080604052348015600f57600080fd5b5033fe"; // минимальный runtime код пустого контракта
+            const tx = await ethers.provider.send("eth_sendTransaction", [{
+                from: user0.address,
+                data: code,
+                gas: "0x100000"
+            }]);
+            const callerAddress = tx.contractAddress;
+
+            
+            await expect(
+            ethers.provider.call({
+                to: ERC721_Token.getAddress(),
+                from: callerAddress,
+                value: mintPrice,
+                data: ERC721_Token.interface.encodeFunctionData("safeMint")
+            })
+            ).to.be.revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver");
+        });            
+    
+    });    
 
     /*describe("correct transfers", function(){
         

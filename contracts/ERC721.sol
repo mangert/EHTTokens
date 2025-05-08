@@ -20,7 +20,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     mapping (address owner => mapping (address operator => bool)) public override isApprovedForAll;    
 
     string private baseURI;
-    uint256 private nextTokenId; //инкремент для минта
+    uint256 public nextTokenId; //инкремент для минта
     
     //хранилища для Enumerable
     mapping(address owner => mapping(uint256 index => uint256)) private _ownedTokens;    
@@ -30,20 +30,29 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
     //требования для минта
     uint256 public mintPrice;
-    uint256 public maxSupply;
+    uint256 public maxSupply;  
+
+    address owner; //владелец контракта
+
+    modifier  onlyOwner() {
+        require(msg.sender == owner, ERC721NotAllowedWithdraw(msg.sender));
+        _;        
+    }
 
     constructor(
         string memory _name, 
         string memory _symbol, 
         string memory _baseURI, 
         uint256 _mintPrice, 
-        uint256 _maxSupply
+        uint256 _maxSupply        
     ){
         name = _name;
         symbol = _symbol;
         baseURI = _baseURI;
         mintPrice = _mintPrice;
         maxSupply = _maxSupply;
+
+        owner = msg.sender;
     }
 
 
@@ -68,16 +77,28 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     }
 
     function mint() external payable {
-        
-
+        _mint(msg.sender, msg.value);
     }
 
     function safeMint() external payable {
+        address minter = msg.sender;
+        require(_checkOnERC721Received(address(0), minter, nextTokenId), ERC721InvalidReceiver(minter));
+
+        _mint(msg.sender, msg.value);
 
     }
 
     function burn(uint256 _tokenId) external {
+        require(_exists(_tokenId), ERC721NonexistentToken(_tokenId));
+        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721InvalidOwner(msg.sender));
+        address from = ownerOf[_tokenId];
+        
+        _updateEnumeration (from, address(0), _tokenId);
 
+        --balanceOf[from];
+        delete ownerOf[_tokenId];        
+        emit IERC721.Transfer(from, address(0), _tokenId);        
+        
     }
 
     function approve(address _approved, uint256 _tokenId) external payable override {
@@ -124,8 +145,15 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
         return _ownedTokens[_owner][_index];
 
-    }    
-     
+    }
+
+    //функции для владельца контракта
+    function withdrawAll() external onlyOwner() {
+        
+        uint256 amount = address(this).balance;
+        (bool success, ) = msg.sender.call{ value: amount }("");
+    }  
+   
      //служебные функции  
     function  _transfer(address _from, address _to, uint256 tokenId)  internal {
         require(_exists(tokenId), ERC721Errors.ERC721NonexistentToken(tokenId));        
@@ -145,10 +173,10 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         
     }    
 
-    function _mint(address _minter, uint256 _value) internal {    
+    function _mint(address _minter, uint256 _value) internal {            
         
         require (nextTokenId < maxSupply, ERC721MintNotAvailable());
-        require (_value <= mintPrice, ERC721NotEnoughTransferredFunds(_minter, _value, mintPrice));
+        require (_value >= mintPrice, ERC721NotEnoughTransferredFunds(_minter, _value, mintPrice));
 
         _updateEnumeration (address(0), _minter, nextTokenId);
         ownerOf[nextTokenId] = _minter;        
@@ -156,8 +184,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         
         emit IERC721.Transfer(address(0), _minter, nextTokenId);                        
         nextTokenId++;
-
-    }
+    }    
 
     function _isApprovedOrOwner(address spender, uint tokenId) internal view returns (bool) {
         
@@ -209,7 +236,6 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
          _allTokens[tokenIndex] = lastTokenId;
          _allTokensIndex[lastTokenId] = tokenIndex;
-
         
         delete _allTokensIndex[_tokenId];
         _allTokens.pop();
@@ -217,7 +243,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     }
 
     function _addTokenToOwnerEnumeration(address _to, uint _tokenId) internal {
-         uint256 nextIndex = balanceOf[_to] - 1;
+         uint256 nextIndex = balanceOf[_to];
         _ownedTokens[_to][nextIndex] = _tokenId;
         _ownedTokensIndex[_tokenId] = nextIndex;
     }
