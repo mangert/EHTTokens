@@ -20,7 +20,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     mapping (address owner => mapping (address operator => bool)) public override isApprovedForAll;    
 
     string private baseURI;
-    uint256 public nextTokenId; //инкремент для минта
+    uint256 private nextTokenId; //инкремент для минта
     
     //хранилища для Enumerable
     mapping(address owner => mapping(uint256 index => uint256)) private _ownedTokens;    
@@ -57,23 +57,22 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
 
     function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes calldata data) external payable override {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));
+        
         require(_checkOnERC721Received(_from, _to, _tokenId), ERC721Errors.ERC721InvalidReceiver(_to));
+        
         _transfer(_from, _to, _tokenId);   
     }
 
     function safeTransferFrom(address _from, address _to, uint256 _tokenId) external payable override {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));
-        require(_checkOnERC721Received(_from, _to, _tokenId), ERC721Errors.ERC721InvalidReceiver(_to));
-        _transfer(_from, _to, _tokenId);      
         
+        require(_checkOnERC721Received(_from, _to, _tokenId), ERC721Errors.ERC721InvalidReceiver(_to));
+        
+        _transfer(_from, _to, _tokenId);              
     }
 
-    function transferFrom(address _from, address _to, uint256 _tokenId) external payable override {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), ERC721Errors.ERC721InsufficientApproval(_from, _tokenId));        
+    function transferFrom(address _from, address _to, uint256 _tokenId) external payable override {                        
         
-        _transfer(_from, _to, _tokenId);                
-    
+        _transfer(_from, _to, _tokenId);
     }
 
     function mint() external payable {
@@ -156,7 +155,11 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
    
      //служебные функции  
     function  _transfer(address _from, address _to, uint256 tokenId)  internal {
-        require(_exists(tokenId), ERC721Errors.ERC721NonexistentToken(tokenId));        
+        
+        require(_exists(tokenId), ERC721Errors.ERC721NonexistentToken(tokenId));
+        
+        require(_isApprovedOrOwner(msg.sender, tokenId), ERC721Errors.ERC721InsufficientApproval(_from, tokenId));                
+        
         require (_from != _to 
                     && _to != address(0),
                     ERC721Errors.ERC721InvalidReceiver(_to) 
@@ -202,7 +205,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
     }      
     
     function _checkOnERC721Received(address from, address to, uint tokenId) private returns (bool) {
-        if (to.code.length > 0) {
+        if ( _isContract(to) ) {
             try
                 IERC721Receiver(to).onERC721Received(
                     msg.sender,
@@ -218,6 +221,14 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
         } else {
             return true;
         }
+    }
+
+    function _isContract(address account) private view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(account)
+        }
+        return size > 0;
     }
 
     //служебные функции для Enumerable

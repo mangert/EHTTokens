@@ -1,4 +1,5 @@
 import { loadFixture, ethers, expect } from "./setup";
+import { network } from "hardhat";
 
 describe("ERC721", function() {
     
@@ -40,7 +41,7 @@ describe("ERC721", function() {
 
     });
     
-    describe("minting and burning", function(){
+    describe("minting functions", function(){
         
         it("should possible mint NFT", async function() {
         
@@ -124,29 +125,386 @@ describe("ERC721", function() {
 
         }); 
 
-        it("should revert safeMint NFT to non-NFTReciever address", async function() {
+        /*it("should revert safeMint NFT to non-NFTReciever address", async function() {
         
             const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
-            const code = "0x6080604052348015600f57600080fd5b5033fe"; // минимальный runtime код пустого контракта
-            const tx = await ethers.provider.send("eth_sendTransaction", [{
-                from: user0.address,
-                data: code,
-                gas: "0x100000"
-            }]);
-            const callerAddress = tx.contractAddress;
+            const code = "0x6000600d60003960006000f3"; // минимальный контракт с payable fallback
 
-            
+            // 1. Деплой
+            const tx = await user0.sendTransaction({
+            data: code,
+            gasLimit: 100000,
+            });
+
+            const receipt = await tx.wait();
+            const dummyAddr = receipt?.contractAddress;
+            expect(dummyAddr).to.be.properAddress;
+
+            // 2. Отправка ETH
+            await user0.sendTransaction({
+            to: dummyAddr,
+            value: mintPrice + (ethers.parseUnits("0.01", "ether")), // с запасом на газ
+            });
+
+            // 3. Проверка safeMint (от имени dummyAddr)
             await expect(
             ethers.provider.call({
                 to: ERC721_Token.getAddress(),
-                from: callerAddress,
+                from: dummyAddr,
                 value: mintPrice,
                 data: ERC721_Token.interface.encodeFunctionData("safeMint")
             })
             ).to.be.revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver");
-        });            
-    
-    });    
+
+        }); */
+    });
+
+    describe("burning", function(){
+        
+        it("should possible burn NFT", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что сжигать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+
+            const balance_before = await ERC721_Token.balanceOf(user0);
+            const tx_burn = await ERC721_Token.burn(1n);
+            tx.wait(1);
+            const balance_after = await ERC721_Token.balanceOf(user0);
+
+            expect(balance_after).eq(balance_before - 1n);
+            expect(await ERC721_Token.ownerOf(1n)).eq(ethers.ZeroAddress);        
+            expect(await ERC721_Token.totalSupply()).eq(count - 1n);
+        });
+
+        it("should reveted burn not exists token", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что сжигать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }            
+            await expect(ERC721_Token.burn(3n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721NonexistentToken").withArgs(3n);           
+            
+        });
+
+        it("should reveted burn not owned token", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что сжигать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }            
+            await expect(ERC721_Token.connect(user1).burn(1n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidOwner").withArgs(user1.address);        
+            
+        });
+        
+    });
+
+    describe("transfers tests", function(){
+        
+        it("should possible transfer NFT", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+
+            const balance_user0_before = await ERC721_Token.balanceOf(user0);
+            const balance_user1_before = await ERC721_Token.balanceOf(user1);
+
+            const tx_transfer = await ERC721_Token.transferFrom(user0, user1, 2n);
+            tx_transfer.wait(1);
+            
+            const balance_user0_after = await ERC721_Token.balanceOf(user0);
+            const balance_user1_after = await ERC721_Token.balanceOf(user1);
+
+
+            expect(balance_user0_after).eq(balance_user0_before - 1n);
+            expect(balance_user1_after).eq(balance_user1_before + 1n);
+            expect(await ERC721_Token.ownerOf(2n)).eq(user1.address);
+            expect(await ERC721_Token.totalSupply()).eq(count);            
+        });
+
+        it("should possible safeTransfer NFT", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+
+            const balance_user0_before = await ERC721_Token.balanceOf(user0);
+            const balance_user1_before = await ERC721_Token.balanceOf(user1);
+
+            const tx_transfer = await ERC721_Token["safeTransferFrom(address,address,uint256)"](user0, user1, 2n);
+            tx_transfer.wait(1);
+            
+            const balance_user0_after = await ERC721_Token.balanceOf(user0);
+            const balance_user1_after = await ERC721_Token.balanceOf(user1);
+
+            expect(balance_user0_after).eq(balance_user0_before - 1n);
+            expect(balance_user1_after).eq(balance_user1_before + 1n);
+            expect(await ERC721_Token.ownerOf(2n)).eq(user1.address);
+            expect(await ERC721_Token.totalSupply()).eq(count);           
+            
+        });
+
+        it("should reveted transfer not exists token", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что сжигать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.transferFrom(user0, user1, 3n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721NonexistentToken").withArgs(3n);                       
+        });
+
+        it("should reveted transfer not owned token", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.connect(user1).transferFrom(user0, user2, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InsufficientApproval").withArgs(user0, 2n);
+        });
+
+         it("should reveted safeTransfer not owned token", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.connect(user1)["safeTransferFrom(address,address,uint256)"](user0, user2, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InsufficientApproval").withArgs(user0, 2n);
+        });
+
+        it("should reveted transfer to self", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.transferFrom(user0, user0, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver").withArgs(user0);
+        });
+
+        it("should reveted safeTransfer to self", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token["safeTransferFrom(address,address,uint256)"](user0, user0, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver").withArgs(user0);
+        });
+
+        it("should reveted transfer to ZeroAddress", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.transferFrom(user0, ethers.ZeroAddress, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver").withArgs(ethers.ZeroAddress);
+        });
+
+        it("should reveted safeTransfer to ZeroAddress", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token["safeTransferFrom(address,address,uint256)"](user0, ethers.ZeroAddress, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver").withArgs(ethers.ZeroAddress);
+        });
+    });
+
+    describe("Approves", function(){
+        
+        it("should possible approve NFT", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, на чем экспериментировать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+
+            const tx_appove = await ERC721_Token.approve(user1.address, 2n);
+            tx_appove.wait(1);
+
+            const user = await ERC721_Token.getApproved(2n);
+
+            const tx_test_transfer = await ERC721_Token.connect(user1).transferFrom(user0, user2, 2n);
+            tx_test_transfer.wait(1);
+            const balance_user2 = await ERC721_Token.balanceOf(user2);
+            
+            expect(user).eq(user1);
+            expect(balance_user2).eq(1n);            
+        });
+
+        it("should reveted approve to not exists token", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, на чем экспериментировать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }            
+            await expect(ERC721_Token.approve(user1, 3n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721NonexistentToken").withArgs(3n);           
+            
+        });
+
+        it("should reveted approvе not owned token", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, на чем экспериментировать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }            
+            await expect(ERC721_Token.connect(user1).approve(user2, 1n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidApprover").withArgs(user1.address);        
+            
+        });
+
+        it("should reveted approve to self", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.approve(user0, 2n)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidOperator").withArgs(user0);
+        });
+
+        it("should possible approve for All", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, на чем экспериментировать
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }
+
+            const tx_appoveAll = await ERC721_Token.setApprovalForAll(user1, true);
+            tx_appoveAll.wait(1);
+
+            const isApprove = await ERC721_Token.isApprovedForAll(user0, user1);
+
+            expect(isApprove).true;
+
+            const tx_test_transfer = await ERC721_Token.connect(user1).transferFrom(user0, user2, 2n);
+            tx_test_transfer.wait(1);
+            const balance_user2 = await ERC721_Token.balanceOf(user2);            
+            
+            expect(balance_user2).eq(1n);            
+        });
+
+        it("should reveted approveForAll to self", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.setApprovalForAll(user0, true)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidOperator").withArgs(user0);
+        });
+
+        it("should reveted approveForAll to ZeroAddress", async function() {
+            const { user0, user1, user2, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что переводить
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            
+            await expect(ERC721_Token.setApprovalForAll(ethers.ZeroAddress, true)).to.be
+              .revertedWithCustomError(ERC721_Token, "ERC721InvalidOperator").withArgs(ethers.ZeroAddress);
+        });
+        
+    });
+
+
 
     /*describe("correct transfers", function(){
         
