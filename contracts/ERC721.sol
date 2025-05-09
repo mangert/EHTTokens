@@ -54,8 +54,7 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
         owner = msg.sender;
     }
-
-
+   
     function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes calldata data) external payable override {
         
         require(_checkOnERC721Received(_from, _to, _tokenId), ERC721Errors.ERC721InvalidReceiver(_to));
@@ -261,11 +260,10 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
 
     function _removeTokenFromOwnerEnumeration(address _from, uint _tokenId) internal {
         
-        uint256 lastTokenIndex = balanceOf[_from];
+        uint256 lastTokenIndex = balanceOf[_from] - 1;
         uint256 tokenIndex = _ownedTokensIndex[_tokenId];
 
         mapping(uint256 index => uint256) storage _ownedTokensByOwner = _ownedTokens[_from];
-
         
         if (tokenIndex != lastTokenIndex) {
             uint256 lastTokenId = _ownedTokensByOwner[lastTokenIndex];

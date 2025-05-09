@@ -1,3 +1,4 @@
+import { PayableOverrides } from "../typechain-types/common";
 import { loadFixture, ethers, expect } from "./setup";
 import { network } from "hardhat";
 
@@ -5,7 +6,7 @@ describe("ERC721", function() {
     
     const tokenName = "Alphabet";
     const tokenSymbol = "ABC";
-    const collectionURI = "https://drive.google.com/drive/folders/1Ds1OrpnlwQeu8lu9UQoL0HzUEjPw6D-V/";
+    const collectionURI = "https://raw.githubusercontent.com/mangert/NFTMetadataStorage/refs/heads/main/";
     
     const mintPrice = 1_000_000_000n;
     const maxSupply = 3; //заведомо маленькое число, чтобы было легко превысить
@@ -101,7 +102,7 @@ describe("ERC721", function() {
             const max = await ERC721_Token.maxSupply();
             let tx: any;
             for(let i = 0n; i != max; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
             
@@ -116,47 +117,14 @@ describe("ERC721", function() {
             const max = await ERC721_Token.maxSupply();
             let tx: any;
             for(let i = 0n; i != max; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
             
             await expect(ERC721_Token.safeMint({value: mintPrice})).to.be
               .revertedWithCustomError(ERC721_Token, "ERC721MintNotAvailable");
 
-        }); 
-
-        /*it("should revert safeMint NFT to non-NFTReciever address", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
-            const code = "0x6000600d60003960006000f3"; // минимальный контракт с payable fallback
-
-            // 1. Деплой
-            const tx = await user0.sendTransaction({
-            data: code,
-            gasLimit: 100000,
-            });
-
-            const receipt = await tx.wait();
-            const dummyAddr = receipt?.contractAddress;
-            expect(dummyAddr).to.be.properAddress;
-
-            // 2. Отправка ETH
-            await user0.sendTransaction({
-            to: dummyAddr,
-            value: mintPrice + (ethers.parseUnits("0.01", "ether")), // с запасом на газ
-            });
-
-            // 3. Проверка safeMint (от имени dummyAddr)
-            await expect(
-            ethers.provider.call({
-                to: ERC721_Token.getAddress(),
-                from: dummyAddr,
-                value: mintPrice,
-                data: ERC721_Token.interface.encodeFunctionData("safeMint")
-            })
-            ).to.be.revertedWithCustomError(ERC721_Token, "ERC721InvalidReceiver");
-
-        }); */
+        });         
     });
 
     describe("burning", function(){
@@ -168,7 +136,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
 
@@ -189,7 +157,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }            
             await expect(ERC721_Token.burn(3n)).to.be
@@ -204,7 +172,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }            
             await expect(ERC721_Token.connect(user1).burn(1n)).to.be
@@ -223,7 +191,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
 
@@ -250,7 +218,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
 
@@ -277,7 +245,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -292,7 +260,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -307,7 +275,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -322,7 +290,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -337,7 +305,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -352,7 +320,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -367,7 +335,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -385,7 +353,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
 
@@ -409,7 +377,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }            
             await expect(ERC721_Token.approve(user1, 3n)).to.be
@@ -424,7 +392,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }            
             await expect(ERC721_Token.connect(user1).approve(user2, 1n)).to.be
@@ -439,7 +407,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -454,7 +422,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }
 
@@ -479,7 +447,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -494,7 +462,7 @@ describe("ERC721", function() {
             let tx: any;
             const count = 3n;
             for(let i = 0n; i != count; ++i) {
-                tx = await ERC721_Token.mint({value: mintPrice})
+                tx = await ERC721_Token.mint({value: mintPrice});
                 await tx.wait(1);                                     
             }                        
             
@@ -504,254 +472,180 @@ describe("ERC721", function() {
         
     });
 
-
-
-    /*describe("correct transfers", function(){
+    describe("withdraw", function(){
         
-        it("should possible transfer", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
+        it("should possible withdraw by owner", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
             
-            const tokenID = 1000n;
-            const balance_user0_before = await ERC721_Token.balanceOf(user0);
+            //сминтим несколько штук, чтобы были деньги на контракте
+            let tx: any;
+            const count = 3n;
+            let contractFunds = 0n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.connect(user1).mint({value: mintPrice});
+                contractFunds += mintPrice;
+                await tx.wait(1);                                     
+            }
+            const tx_withdraw = await ERC721_Token.withdrawAll();            
             
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);                     
+            expect(await tx_withdraw).changeEtherBalances([await ERC721_Token.getAddress(), user0], [contractFunds, -contractFunds]);
+        });
+
+        it("should reveted withdraw by non contract owner", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
             
-            const balance_user1 = await ERC721_Token.balanceOf(user1);        
-            expect(balance_user1).eq(amount);        
-            
-            const balance_user0_after = await ERC721_Token.balanceOf(user0);
-            const balance_user0_after_eq = balance_user0_before - amount;
-            expect(balance_user0_after).eq(balance_user0_after_eq);
+            //сминтим несколько штук, чтобы были деньги на контракте
+            let tx: any;
+            const count = 3n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice})
+                await tx.wait(1);                                     
+            }                        
+            await expect(ERC721_Token.connect(user1).withdrawAll())
+                .revertedWithCustomError(ERC721_Token, "ERC721NotAllowedWithdraw")
+                .withArgs(user1);            
+        });        
+    });
+
     
-            const totalSupply: bigint = await ERC721_Token.totalSupply();
-            const totalSupply_eq = balance_user1 + balance_user0_after;
-            expect(totalSupply).eq(totalSupply_eq);   
+    describe("enumerable fuctions", function(){
+        
+        it("should correct index before mint tokens", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);                      
+            
+            let totalSupply = await ERC721_Token.totalSupply();
+            expect(totalSupply).eq(0);
+
+            let index = 0n;
+            await expect(ERC721_Token.tokenByIndex(index)).to.be
+            .revertedWithCustomError(ERC721_Token, "ERC721OutOfBoundsIndex")
+            .withArgs(ethers.ZeroAddress, index);
+
+            await expect(ERC721_Token.tokenOfOwnerByIndex(user1, ++index)).to.be
+            .revertedWithCustomError(ERC721_Token, "ERC721OutOfBoundsIndex")
+            .withArgs(user1, index);
+
+        });
+
+        it("should correct index after mint", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что считать
+            let tx: any;
+            const count = 3n;
+            let contractFunds = 0n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice});
+                contractFunds += mintPrice;
+                await tx.wait(1);                                     
+            }
+            
+            //проверка после минта
+            let totalSupply = await ERC721_Token.totalSupply();
+            expect(totalSupply).eq(count);
+            
+            let index_0 = await ERC721_Token.tokenByIndex(0);
+            expect(index_0).eq(0n);
+
+            let index_2 = await ERC721_Token.tokenByIndex(2);
+            expect(index_2).eq(2n);
+
+            let user_index_1 = await ERC721_Token.tokenOfOwnerByIndex(user0, 1);
+            expect(user_index_1).eq(1n);            
+
+            //проверка после перевода
+            
+            const tx_transfer = await ERC721_Token.transferFrom(user0, user1, 1n);
+            tx_transfer.wait(1);
+
+            totalSupply = await ERC721_Token.totalSupply();
+            expect(totalSupply).eq(count);
+
+            index_0 = await ERC721_Token.tokenByIndex(0);
+            expect(index_0).eq(0n);
+
+            index_2 = await ERC721_Token.tokenByIndex(2);
+            expect(index_2).eq(2n);
+
+            let user_0_index_1 = await ERC721_Token.tokenOfOwnerByIndex(user0, 1);          
+            expect(user_0_index_1).eq(2n);            
+            
+            let user_1_index_0 = await ERC721_Token.tokenOfOwnerByIndex(user1, 0);
+            expect(user_1_index_0).eq(1n);            
+        });
+
+        it("should correct index after burn", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы было, что считать
+            let tx: any;
+            const count = 3n;
+            let contractFunds = 0n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.mint({value: mintPrice});
+                contractFunds += mintPrice;
+                await tx.wait(1);                                     
+            }           
+            
+            const totalSupply_before = await ERC721_Token.totalSupply();
+            const tx_burn = await ERC721_Token.burn(1);
+            const totalSupply_after = await ERC721_Token.totalSupply();
+            
+            expect(totalSupply_after).eq(totalSupply_before - 1n);
+
+            const indexTotal = await ERC721_Token.tokenByIndex(1);
+            expect(indexTotal).eq(2n);
+            
+            const indexUser = await ERC721_Token.tokenOfOwnerByIndex(user0, 1);          
+            expect(indexUser).eq(2n);            
+        });
+    });
+
+    describe("metadata", function(){
+        
+        it("should returns correct URI", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
+            
+            //сминтим несколько штук, чтобы были NFT для запроса
+            let tx: any;
+            const count = 3n;
+            let contractFunds = 0n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.connect(user1).mint({value: mintPrice});
+                contractFunds += mintPrice;
+                await tx.wait(1);                                     
+            }
+
+            const url = await ERC721_Token.tokenURI(1);           
+
+            const response = await fetch(url);
+            if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const metadata = await response.json();
+
+            expect(metadata.name).eq("Alpha");          
             
         });
 
-        it("should possible transferFrom", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
+        it("should reverted request not exists token URI", async function() {
+            const { user0, user1, ERC721_Token} = await loadFixture(deploy);            
             
-            const amount = 1000n;
-            const balance_user0_before = await ERC721_Token.balanceOf(user0);
-            
-            const tx = await ERC721_Token.transferFrom(user0, user1, amount);
-            await tx.wait(1);               
-            
-            const balance_user1 = await ERC721_Token.balanceOf(user1);        
-            expect(balance_user1).eq(amount);        
-            
-            const balance_user0_after = await ERC721_Token.balanceOf(user0);
-            const balance_user0_after_eq = balance_user0_before - amount;
-            expect(balance_user0_after).eq(balance_user0_after_eq);
-    
-            const totalSupply: bigint = await ERC721_Token.totalSupply();
-            const totalSupply_eq = balance_user1 + balance_user0_after;
-            expect(totalSupply).eq(totalSupply_eq);        
-        });
+            //сминтим несколько штук, чтобы были NFT для запроса
+            let tx: any;
+            const count = 3n;
+            let contractFunds = 0n;
+            for(let i = 0n; i != count; ++i) {
+                tx = await ERC721_Token.connect(user1).mint({value: mintPrice});
+                contractFunds += mintPrice;
+                await tx.wait(1);                                     
+            }
 
-    });    
-    
-    describe("transfers errors", function() {
-        it("should be reverted trassfer with insufficient balance", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
+            await expect (ERC721_Token.tokenURI(5)).to.be
+            .revertedWithCustomError(ERC721_Token, "ERC721NonexistentToken")
+            .withArgs(5);           
             
-            const amount = 1000n;
-            const balance_user0_before = await ERC721_Token.balanceOf(user0);
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);         
-            
-            const user1_balance = await ERC721_Token.balanceOf(user1);
-            
-    
-            //некорректные транзы
-            await expect(ERC721_Token.connect(user1).transfer(user0, amount * 2n)).
-                to.be.revertedWithCustomError(ERC721_Token,"ERC20InsufficientBalance").
-                withArgs(user1, user1_balance, amount * 2n);           
             
         });
-
-        it("should be reverted transferFrom with insufficient balance", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;
-            const balance_user0_before = await ERC721_Token.balanceOf(user0);
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);                        
-            
-            const user1_balance = await ERC721_Token.balanceOf(user1);            
-
-            //некорректные транзы            
-            await expect(ERC721_Token.connect(user1).transferFrom(user1, user0, amount * 2n)).
-                to.be.revertedWithCustomError(ERC721_Token,"ERC20InsufficientBalance").
-                withArgs(user1, user1_balance, amount * 2n);                  
-            
-        });
-
-        it("should be reverted transfer to ZERO address", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;    
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);                             
-            
-            const ZERO_ADDRESS =  ethers.ZeroAddress;//"0x0000000000000000000000000000000000000000";  
-    
-            //некорректные транзы
-            
-            await expect(ERC721_Token.transfer(ZERO_ADDRESS, amount)).
-                to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidReceiver").
-                withArgs(ZERO_ADDRESS);            
-        });
-
-        it("should be reverted transfer to self", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;            
-
-            await expect(ERC721_Token.transfer(user0, amount)).
-                to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidReceiver").
-                withArgs(user0.address);             
-        });
-
-        it("should be reverted transferFrom from ZERO address", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;            
-            
-            const ZERO_ADDRESS =  ethers.ZeroAddress;//"0x0000000000000000000000000000000000000000";  
-    
-            //некорректные транзы
-            
-            await expect(ERC721_Token.connect(user1).transferFrom(ZERO_ADDRESS, user0, amount)).
-                to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidSender").
-                withArgs(ZERO_ADDRESS);
-        });
-
-        it("should be reverted transferFrom to ZERO address", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;            
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);             
-            
-            const ZERO_ADDRESS =  ethers.ZeroAddress;//"0x0000000000000000000000000000000000000000";  
-    
-            //некорректные транзы            
-            
-            await expect(ERC721_Token.connect(user1).transferFrom(user1, ZERO_ADDRESS, amount)).
-                to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidReceiver").
-                withArgs(ZERO_ADDRESS);             
-        });
-
-        it("should be reverted transferFrom from ZERO address", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;            
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);         
-            
-            const ZERO_ADDRESS =  ethers.ZeroAddress;//"0x0000000000000000000000000000000000000000";  
-    
-            //некорректные транзы
-            
-            await expect(ERC721_Token.connect(user1).transferFrom(ZERO_ADDRESS, user0, amount)).
-                to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidSender").
-                withArgs(ZERO_ADDRESS);                   
-    
-        });
-
-        it("should be reverted transferFrom to self", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);             
-            
-            //некорректные транзы            
-            
-            await expect(ERC721_Token.transferFrom(user0, user0, amount)).
-                to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidReceiver").
-                withArgs(user0.address);                           
-        });
-
-        it("should be reverted transferFrom not allowed amount", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;            
-            
-            //корректная транзакция - чтобы перебросить на второй адрес
-            const tx = await ERC721_Token.transfer(user1, amount);
-            await tx.wait(1);         
-    
-            //дополнительно - выдача разрешений по переводу на второй адрес
-            const tx_app = await ERC721_Token.approve(user1, amount);
-            tx_app.wait(1);                                   
-    
-            //некорректные транзы                  
-            
-            await expect(ERC721_Token.connect(user1).transferFrom(user0, user1, amount * 2n)).
-                to.be.revertedWithCustomError(ERC721_Token,"ERC20InsufficientAllowance").
-                withArgs(user1, amount, amount * 2n);
-        });
-    
-    });    
-
-    describe("approvements", function() {
-        
-        it("should possible approve", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-    
-            const amount = 1000n;
-            const tx_app = await ERC721_Token.approve(user1, amount);
-            tx_app.wait(1);
-    
-            const allow_amount = await ERC721_Token.allowance(user0, user1);                
-            
-            expect(allow_amount).eq(amount);
-            
-        });
-
-        it("should be reverted set approve to ZERO address", async function() {
-        
-            const { user0, user1, ERC721_Token} = await loadFixture(deploy);
-            
-            const amount = 1000n;            
-            
-            //дополнительно - выдача разрешений по переводу на второй адрес
-            const tx_app = await ERC721_Token.approve(user1, amount);
-            tx_app.wait(1);
-            const ZERO_ADDRESS =  ethers.ZeroAddress;//"0x0000000000000000000000000000000000000000";  
-    
-            //некорректные транзы                   
-            await expect(ERC721_Token.approve(ZERO_ADDRESS, amount))
-                .to.be.revertedWithCustomError(ERC721_Token, "ERC20InvalidSpender").withArgs(ZERO_ADDRESS);        
-        });
-    });   */
-});
-
+    });
+})
