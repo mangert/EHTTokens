@@ -221,7 +221,6 @@ contract ERC721 is IERC721Metadata, IERC721Enumerable, ERC721Errors {
             return true;
         }
     }
-
     function _isContract(address account) private view returns (bool) {
         uint256 size;
         assembly {
