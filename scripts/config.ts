@@ -1,5 +1,5 @@
 //настройки для верификации ЕRC-20    
-    const ERC20_contractAddress = "0xYourFirstContractAddress"; //подставить после деплоя
+    const ERC20_contractAddress = "0x2b27530BD462d612491d3E9A8538bBD7D8009D00"; //подставить после деплоя
 
  //настройки для ЕRC-721
     const ERC721_argsObject  = 
@@ -19,7 +19,7 @@
         ERC721_argsObject.mint_price
 ];
         
-    const ERC721_contractAddress = "0xYourFirstContractAddress"; //подставить после деплоя
+    const ERC721_contractAddress = "0xA6B8dac4980b4C8Bc46ff8a28e256699a337fD26"; //подставить после деплоя
 
 
 export {ERC20_contractAddress, getERC721ArgsArray, ERC721_contractAddress};

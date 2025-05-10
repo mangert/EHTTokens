@@ -1,4 +1,4 @@
-import { ERC721_contractAddress, ERC721_constructorArgs } from "./config"
+import { ERC721_contractAddress, getERC721ArgsArray } from "./config"
 import { run } from "hardhat";
 
 async function main() {
@@ -8,7 +8,7 @@ async function main() {
   try {
     await run("verify:verify", {
       address: contractAddress,
-      constructorArguments: ERC721_constructorArgs,
+      constructorArguments: getERC721ArgsArray(),
     });
     console.log("Verification successful!");
   } catch (error: any) {

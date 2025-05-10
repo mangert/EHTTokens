@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import hre, { ethers } from "hardhat";
 
 async function main() {
@@ -7,7 +9,18 @@ async function main() {
     const ERC20Token = await ethers.getContractFactory("ERC20");
     const token = await ERC20Token.deploy();    
     await token.waitForDeployment(); 
-    console.log(token.target);    
+    
+    const address = await token.getAddress();
+    console.log("Deployed ERC20 at:", address);
+        
+        
+    const configPath = path.resolve(__dirname, "./config.ts");
+    let configContent = fs.readFileSync(configPath, "utf8");
+    
+    const newContent = configContent.replace(
+    /const ERC20_contractAddress = ".*?";/,
+    `const ERC20_contractAddress = "${address}";`
+      );
 }
 
 main()
